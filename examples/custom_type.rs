@@ -1,14 +1,8 @@
 //! This example shows how you can use `Atomic<T>` with your own types by
 //! deriving `Atom`.
 
-use std::{
-    num::NonZeroU16,
-    sync::Arc,
-    thread,
-    time::Duration,
-};
-use atomig::{Atom, Atomic, AtomLogic, Ordering};
-
+use atomig::{Atom, AtomLogic, Atomic, Ordering};
+use std::{num::NonZeroU16, sync::Arc, thread, time::Duration};
 
 #[derive(Debug, PartialEq, Atom)]
 #[repr(u8)]
@@ -46,7 +40,6 @@ fn main() {
 
     thread::sleep(Duration::from_millis(10));
     println!("Final animal: {:?}", animal);
-
 
     // Example with `BitSet`
     let integer_set = Arc::new(Atomic::new(BitSet(0b11001100_11110000)));

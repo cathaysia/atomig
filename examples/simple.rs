@@ -1,13 +1,8 @@
 //! This simple example shows how to use `Atomic` with primitive types (`u32`
 //! and `bool` in this case).
 
-use std::{
-    sync::Arc,
-    thread,
-    time::Duration,
-};
 use atomig::{Atomic, Ordering};
-
+use std::{sync::Arc, thread, time::Duration};
 
 fn main() {
     // `Atomic<u32>`
@@ -15,13 +10,15 @@ fn main() {
     a.store(27, Ordering::SeqCst);
     println!("{:?}", a);
 
-
     // `Atomic<bool>`
     let b = Arc::new(Atomic::new(false));
     {
         let b = b.clone();
         thread::spawn(move || {
-            while b.compare_exchange(true, false, Ordering::SeqCst, Ordering::SeqCst).is_err() {}
+            while b
+                .compare_exchange(true, false, Ordering::SeqCst, Ordering::SeqCst)
+                .is_err()
+            {}
             println!("Reset it to false!");
         });
     }

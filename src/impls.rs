@@ -3,9 +3,11 @@
 //! Most items of these traits are hidden and not part of the public API of this library.
 //! You cannot implement these traits yourself.
 
-use core::{num::Wrapping, sync::atomic::{self, Ordering}};
-use super::{Atom, AtomLogic, AtomInteger};
-
+use super::{Atom, AtomInteger, AtomLogic};
+use core::{
+    num::Wrapping,
+    sync::atomic::{self, Ordering},
+};
 
 // ===============================================================================================
 // ===== All `Atomic*Impl` traits and `PrimitiveAtom`
@@ -103,8 +105,6 @@ pub trait PrimitiveAtomInteger: PrimitiveAtom {
     fn fetch_min(imp: &Self::Impl, val: Self, order: Ordering) -> Self;
 }
 
-
-
 // ===============================================================================================
 // ===== Implementations for standard library types
 // ===============================================================================================
@@ -184,7 +184,7 @@ macro_rules! pass_through_methods {
             f: F,
         ) -> Result<Self, Self>
         where
-            F: FnMut(Self) -> Option<Self>
+            F: FnMut(Self) -> Option<Self>,
         {
             imp.fetch_update(set_order, fetch_order, f)
         }
@@ -257,8 +257,6 @@ impl<T> PrimitiveAtom for *mut T {
     pass_through_methods!(atomic::AtomicPtr<T>);
 }
 
-
-
 // ----- Integers and `bool` -----
 
 macro_rules! impl_std_atomics {
@@ -304,17 +302,28 @@ macro_rules! impl_std_atomics {
     (@int_methods $ty:ty, $non_zero_ty:ident, $impl_ty:ident, false) => {};
 }
 
-#[cfg(target_has_atomic = "8")] impl_std_atomics!(bool, _Dummy, AtomicBool, false);
-#[cfg(target_has_atomic = "8")] impl_std_atomics!(u8, NonZeroU8, AtomicU8, true);
-#[cfg(target_has_atomic = "8")] impl_std_atomics!(i8, NonZeroI8, AtomicI8, true);
-#[cfg(target_has_atomic = "16")] impl_std_atomics!(u16, NonZeroU16, AtomicU16, true);
-#[cfg(target_has_atomic = "16")] impl_std_atomics!(i16, NonZeroI16, AtomicI16, true);
-#[cfg(target_has_atomic = "32")] impl_std_atomics!(u32, NonZeroU32, AtomicU32, true);
-#[cfg(target_has_atomic = "32")] impl_std_atomics!(i32, NonZeroI32, AtomicI32, true);
-#[cfg(target_has_atomic = "64")] impl_std_atomics!(u64, NonZeroU64, AtomicU64, true);
-#[cfg(target_has_atomic = "64")] impl_std_atomics!(i64, NonZeroI64, AtomicI64, true);
-#[cfg(target_has_atomic = "ptr")] impl_std_atomics!(usize, NonZeroUsize, AtomicUsize, true);
-#[cfg(target_has_atomic = "ptr")] impl_std_atomics!(isize, NonZeroIsize, AtomicIsize, true);
+#[cfg(target_has_atomic = "8")]
+impl_std_atomics!(bool, _Dummy, AtomicBool, false);
+#[cfg(target_has_atomic = "8")]
+impl_std_atomics!(u8, NonZeroU8, AtomicU8, true);
+#[cfg(target_has_atomic = "8")]
+impl_std_atomics!(i8, NonZeroI8, AtomicI8, true);
+#[cfg(target_has_atomic = "16")]
+impl_std_atomics!(u16, NonZeroU16, AtomicU16, true);
+#[cfg(target_has_atomic = "16")]
+impl_std_atomics!(i16, NonZeroI16, AtomicI16, true);
+#[cfg(target_has_atomic = "32")]
+impl_std_atomics!(u32, NonZeroU32, AtomicU32, true);
+#[cfg(target_has_atomic = "32")]
+impl_std_atomics!(i32, NonZeroI32, AtomicI32, true);
+#[cfg(target_has_atomic = "64")]
+impl_std_atomics!(u64, NonZeroU64, AtomicU64, true);
+#[cfg(target_has_atomic = "64")]
+impl_std_atomics!(i64, NonZeroI64, AtomicI64, true);
+#[cfg(target_has_atomic = "ptr")]
+impl_std_atomics!(usize, NonZeroUsize, AtomicUsize, true);
+#[cfg(target_has_atomic = "ptr")]
+impl_std_atomics!(isize, NonZeroIsize, AtomicIsize, true);
 
 // ----- Implementations for non-atomic primitive types ------------------------------------------
 #[cfg(target_has_atomic = "32")]
@@ -363,7 +372,6 @@ impl<T: Atom> Atom for Wrapping<T> {
 }
 impl<T: AtomLogic> AtomLogic for Wrapping<T> where T::Repr: PrimitiveAtomLogic {}
 
-
 #[cfg(target_has_atomic = "ptr")]
 impl<T> Atom for core::ptr::NonNull<T> {
     type Repr = *mut T;
@@ -371,8 +379,7 @@ impl<T> Atom for core::ptr::NonNull<T> {
         self.as_ptr().pack()
     }
     fn unpack(src: Self::Repr) -> Self {
-        Self::new(<*mut T>::unpack(src))
-            .expect("null value in `<NonNull<T> as Atom>::unpack`")
+        Self::new(<*mut T>::unpack(src)).expect("null value in `<NonNull<T> as Atom>::unpack`")
     }
 }
 
@@ -413,16 +420,26 @@ macro_rules! impl_option_non_zero {
     };
 }
 
-#[cfg(target_has_atomic = "8")] impl_option_non_zero!(NonZeroU8 = u8);
-#[cfg(target_has_atomic = "8")] impl_option_non_zero!(NonZeroI8 = i8);
-#[cfg(target_has_atomic = "16")] impl_option_non_zero!(NonZeroU16 = u16);
-#[cfg(target_has_atomic = "16")] impl_option_non_zero!(NonZeroI16 = i16);
-#[cfg(target_has_atomic = "32")] impl_option_non_zero!(NonZeroU32 = u32);
-#[cfg(target_has_atomic = "32")] impl_option_non_zero!(NonZeroI32 = i32);
-#[cfg(target_has_atomic = "64")] impl_option_non_zero!(NonZeroU64 = u64);
-#[cfg(target_has_atomic = "64")] impl_option_non_zero!(NonZeroI64 = i64);
-#[cfg(target_has_atomic = "ptr")] impl_option_non_zero!(NonZeroUsize = usize);
-#[cfg(target_has_atomic = "ptr")] impl_option_non_zero!(NonZeroIsize = isize);
+#[cfg(target_has_atomic = "8")]
+impl_option_non_zero!(NonZeroU8 = u8);
+#[cfg(target_has_atomic = "8")]
+impl_option_non_zero!(NonZeroI8 = i8);
+#[cfg(target_has_atomic = "16")]
+impl_option_non_zero!(NonZeroU16 = u16);
+#[cfg(target_has_atomic = "16")]
+impl_option_non_zero!(NonZeroI16 = i16);
+#[cfg(target_has_atomic = "32")]
+impl_option_non_zero!(NonZeroU32 = u32);
+#[cfg(target_has_atomic = "32")]
+impl_option_non_zero!(NonZeroI32 = i32);
+#[cfg(target_has_atomic = "64")]
+impl_option_non_zero!(NonZeroU64 = u64);
+#[cfg(target_has_atomic = "64")]
+impl_option_non_zero!(NonZeroI64 = i64);
+#[cfg(target_has_atomic = "ptr")]
+impl_option_non_zero!(NonZeroUsize = usize);
+#[cfg(target_has_atomic = "ptr")]
+impl_option_non_zero!(NonZeroIsize = isize);
 
 macro_rules! impl_int8_arrays {
     ($elem:ident, $len:literal, $repr:ident) => {
@@ -439,12 +456,18 @@ macro_rules! impl_int8_arrays {
     };
 }
 
-#[cfg(target_has_atomic = "16")] impl_int8_arrays!(u8, 2, u16);
-#[cfg(target_has_atomic = "32")] impl_int8_arrays!(u8, 4, u32);
-#[cfg(target_has_atomic = "64")] impl_int8_arrays!(u8, 8, u64);
-#[cfg(target_has_atomic = "16")] impl_int8_arrays!(i8, 2, u16);
-#[cfg(target_has_atomic = "32")] impl_int8_arrays!(i8, 4, u32);
-#[cfg(target_has_atomic = "64")] impl_int8_arrays!(i8, 8, u64);
+#[cfg(target_has_atomic = "16")]
+impl_int8_arrays!(u8, 2, u16);
+#[cfg(target_has_atomic = "32")]
+impl_int8_arrays!(u8, 4, u32);
+#[cfg(target_has_atomic = "64")]
+impl_int8_arrays!(u8, 8, u64);
+#[cfg(target_has_atomic = "16")]
+impl_int8_arrays!(i8, 2, u16);
+#[cfg(target_has_atomic = "32")]
+impl_int8_arrays!(i8, 4, u32);
+#[cfg(target_has_atomic = "64")]
+impl_int8_arrays!(i8, 8, u64);
 
 macro_rules! impl_int_arrays {
     ($unsigned_elem:ident, $signed_elem:ident, $len:literal, $repr:ident, $nested:tt, $flat:tt) => {
@@ -469,12 +492,26 @@ macro_rules! impl_small_primitive_array {
         impl AtomLogic for [$elem; $len] {}
     };
 }
-#[cfg(target_has_atomic = "32")] impl_int_arrays!(u16, i16, 2, u32,
-    [[b0, b1], [b2, b3]], [b0, b1, b2, b3]);
-#[cfg(target_has_atomic = "64")] impl_int_arrays!(u16, i16, 4, u64,
-    [[b0, b1], [b2, b3], [b4, b5], [b6, b7]], [b0, b1, b2, b3, b4, b5, b6, b7]);
-#[cfg(target_has_atomic = "64")] impl_int_arrays!(u32, i32, 2, u64,
-    [[b0, b1, b2, b3], [b4, b5, b6, b7]], [b0, b1, b2, b3, b4, b5, b6, b7]);
+#[cfg(target_has_atomic = "32")]
+impl_int_arrays!(u16, i16, 2, u32, [[b0, b1], [b2, b3]], [b0, b1, b2, b3]);
+#[cfg(target_has_atomic = "64")]
+impl_int_arrays!(
+    u16,
+    i16,
+    4,
+    u64,
+    [[b0, b1], [b2, b3], [b4, b5], [b6, b7]],
+    [b0, b1, b2, b3, b4, b5, b6, b7]
+);
+#[cfg(target_has_atomic = "64")]
+impl_int_arrays!(
+    u32,
+    i32,
+    2,
+    u64,
+    [[b0, b1, b2, b3], [b4, b5, b6, b7]],
+    [b0, b1, b2, b3, b4, b5, b6, b7]
+);
 
 /// This is just a dummy module to have doc tests.
 ///

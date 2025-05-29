@@ -71,7 +71,10 @@ macro_rules! serde_tests {
             let src = Atomic::new($val0);
             let serialized = bincode::serialize(&src).unwrap();
             let deserialized: Atomic<$ty> = bincode::deserialize(&serialized).unwrap();
-            assert_eq!(src.load(Ordering::SeqCst), deserialized.load(Ordering::SeqCst));
+            assert_eq!(
+                src.load(Ordering::SeqCst),
+                deserialized.load(Ordering::SeqCst)
+            );
         }
     };
 }
@@ -121,7 +124,6 @@ macro_rules! emit_if {
     (y, { $($t:tt)* }) => { $($t)* };
 }
 
-
 // ===============================================================================================
 // ===== Actual tests of different types
 // ===============================================================================================
@@ -138,8 +140,12 @@ macro_rules! gen_tests_for_primitives {
             default_tests!($ty);
             serde_tests!($ty, $val0);
 
-            emit_if!($with_logic, { logic_tests!($val0, $val1); });
-            emit_if!($with_int, { int_tests!($val0, $val1); });
+            emit_if!($with_logic, {
+                logic_tests!($val0, $val1);
+            });
+            emit_if!($with_int, {
+                int_tests!($val0, $val1);
+            });
         }
     };
 }
@@ -190,7 +196,6 @@ mod custom {
     generic_tests!(Foo, Foo::Nothing, Foo::Set(0b101));
     default_tests!(Foo);
 }
-
 
 #[derive(Debug, PartialEq, Eq)]
 enum Foo {
@@ -253,14 +258,14 @@ macro_rules! gen_tests_for_opt_non_zeroes {
     };
 }
 
-gen_tests_for_opt_non_zeroes!(nz_u8,    NonZeroU8);
-gen_tests_for_opt_non_zeroes!(nz_i8,    NonZeroI8);
-gen_tests_for_opt_non_zeroes!(nz_u16,   NonZeroU16);
-gen_tests_for_opt_non_zeroes!(nz_i16,   NonZeroI16);
-gen_tests_for_opt_non_zeroes!(nz_u32,   NonZeroU32);
-gen_tests_for_opt_non_zeroes!(nz_i32,   NonZeroI32);
-gen_tests_for_opt_non_zeroes!(nz_u64,   NonZeroU64);
-gen_tests_for_opt_non_zeroes!(nz_i64,   NonZeroI64);
+gen_tests_for_opt_non_zeroes!(nz_u8, NonZeroU8);
+gen_tests_for_opt_non_zeroes!(nz_i8, NonZeroI8);
+gen_tests_for_opt_non_zeroes!(nz_u16, NonZeroU16);
+gen_tests_for_opt_non_zeroes!(nz_i16, NonZeroI16);
+gen_tests_for_opt_non_zeroes!(nz_u32, NonZeroU32);
+gen_tests_for_opt_non_zeroes!(nz_i32, NonZeroI32);
+gen_tests_for_opt_non_zeroes!(nz_u64, NonZeroU64);
+gen_tests_for_opt_non_zeroes!(nz_i64, NonZeroI64);
 gen_tests_for_opt_non_zeroes!(nz_usize, NonZeroUsize);
 gen_tests_for_opt_non_zeroes!(nz_isize, NonZeroIsize);
 
