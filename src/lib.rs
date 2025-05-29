@@ -78,8 +78,8 @@
 #[macro_use]
 extern crate std;
 
+use crate::impls::{PrimitiveAtom, PrimitiveAtomInteger, PrimitiveAtomLogic};
 use core::fmt;
-use crate::impls::{PrimitiveAtom, PrimitiveAtomLogic, PrimitiveAtomInteger};
 
 pub mod impls;
 #[cfg(test)]
@@ -250,7 +250,8 @@ pub trait Atom {
 pub trait AtomLogic: Atom
 where
     Self::Repr: PrimitiveAtomLogic,
-{}
+{
+}
 
 /// `Atom`s for which integer operations on their atomic representation make
 /// sense.
@@ -290,9 +291,8 @@ where
 pub trait AtomInteger: Atom
 where
     Self::Repr: PrimitiveAtomInteger,
-{}
-
-
+{
+}
 
 // ===============================================================================================
 // ===== The `Atomic<T>` type
@@ -442,6 +442,16 @@ impl<T: Atom> Atomic<T> {
         unsafe { &mut *ptr }
     }
 
+    /// Returns a mutable pointer to the underlying integer.
+    ///
+    /// Doing non-atomic reads and writes on the resulting integer can be a data race. This method is mostly useful for FFI, where the function signature may use *mut i32 instead of &AtomicI32.
+    ///
+    /// Returning an *mut pointer from a shared reference to this atomic is safe because the atomic types work with interior mutability. All modifications of an atomic change the value through a shared reference, and can do so safely as long as they use atomic operations. Any use of the returned raw pointer requires an unsafe block and still has to uphold the same restriction: operations on it must be atomic.
+    pub const fn as_ptr(&self) -> *mut T {
+        let ptr = core::ptr::addr_of!(self.0);
+        ptr as _
+    }
+
     /// Stores a value into the atomic if the current value is the same as the
     /// `current` value.
     ///
@@ -573,7 +583,7 @@ impl<T: Atom> Atomic<T> {
         mut f: F,
     ) -> Result<T, T>
     where
-        F: FnMut(T) -> Option<T>
+        F: FnMut(T) -> Option<T>,
     {
         let f = |repr| f(T::unpack(repr)).map(Atom::pack);
         T::Repr::fetch_update(&self.0, set_order, fetch_order, f)
@@ -688,7 +698,6 @@ where
         T::unpack(T::Repr::fetch_xor(&self.0, val.pack(), order))
     }
 }
-
 
 // TODO: the `where` bound should not be necessary as the `AtomInteger` trait
 // already specifies this. Maybe we can fix this in the future.
@@ -844,7 +853,6 @@ impl<T: Atom + serde::Serialize> serde::Serialize for Atomic<T> {
         self.load(Ordering::SeqCst).serialize(serializer)
     }
 }
-
 
 #[cfg(feature = "serde")]
 impl<'de, T: Atom + serde::Deserialize<'de>> serde::Deserialize<'de> for Atomic<T> {
